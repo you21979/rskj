@@ -34,9 +34,9 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void synchronizeNewNodesInAChain() throws InterruptedException {
-        SimpleAsyncNode node1 = SimpleAsyncNode.createNodeWithWorldBlockChain(100,false, true);
-        SimpleAsyncNode node2 = SimpleAsyncNode.createNodeWithWorldBlockChain(0,false, true);
-        SimpleAsyncNode node3 = SimpleAsyncNode.createNodeWithWorldBlockChain(0,false, true);
+        SimpleAsyncNode node1 = SimpleAsyncNode.createNodeWithWorldBlockChain(100, false, true);
+        SimpleAsyncNode node2 = SimpleAsyncNode.createNodeWithWorldBlockChain(0, false, true);
+        SimpleAsyncNode node3 = SimpleAsyncNode.createNodeWithWorldBlockChain(0, false, true);
 
         Assert.assertEquals(100, node1.getBestBlock().getNumber());
         Assert.assertEquals(0, node2.getBestBlock().getNumber());
@@ -86,9 +86,9 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void synchronizeNewNodeWithBestChain() throws InterruptedException {
-        SimpleAsyncNode node1 = SimpleAsyncNode.createNodeWithWorldBlockChain(30,false, true);
-        SimpleAsyncNode node2 = SimpleAsyncNode.createNodeWithWorldBlockChain(50,false, true);
-        SimpleAsyncNode node3 = SimpleAsyncNode.createNodeWithWorldBlockChain(0,false, true);
+        SimpleAsyncNode node1 = SimpleAsyncNode.createNodeWithWorldBlockChain(30, false, true);
+        SimpleAsyncNode node2 = SimpleAsyncNode.createNodeWithWorldBlockChain(50, false, true);
+        SimpleAsyncNode node3 = SimpleAsyncNode.createNodeWithWorldBlockChain(0, false, true);
 
         Assert.assertEquals(30, node1.getBestBlock().getNumber());
         Assert.assertEquals(50, node2.getBestBlock().getNumber());
@@ -138,8 +138,8 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void synchronizeNewNodeWithTwoPeers() {
-        Blockchain b1 = BlockChainBuilder.ofSize(30, true);
-        Blockchain b2 = BlockChainBuilder.copyAndExtend(b1, 43, true);
+        Blockchain b1 = BlockChainBuilder.ofSizeFromCache(30, true);
+        Blockchain b2 = BlockChainBuilder.copyAndExtendFromCache(b1, 43, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createNode(b1, SyncConfiguration.IMMEDIATE_FOR_TESTING);
         SimpleAsyncNode node2 = SimpleAsyncNode.createNode(b2, SyncConfiguration.IMMEDIATE_FOR_TESTING);
@@ -193,7 +193,7 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void synchronizeNewNodeWithTwoPeersDefault() {
-        Blockchain b1 = BlockChainBuilder.ofSize(50, true);
+        Blockchain b1 = BlockChainBuilder.ofSizeFromCache(50, true);
         Blockchain b2 = BlockChainBuilder.ofSize(0, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createDefaultNode(b1);
@@ -237,7 +237,7 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void synchronizeNewNodeWithTwoPeers200Default() {
-        Blockchain b1 = BlockChainBuilder.ofSize(200, true);
+        Blockchain b1 = BlockChainBuilder.ofSizeFromCache(200, true);
         Blockchain b2 = BlockChainBuilder.ofSize(0, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createDefaultNode(b1);
@@ -281,7 +281,7 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void synchronizeWithTwoPeers200AndOneFails() {
-        Blockchain b1 = BlockChainBuilder.ofSize(200, true);
+        Blockchain b1 = BlockChainBuilder.ofSizeFromCache(200, true);
         Blockchain b2 = BlockChainBuilder.ofSize(0, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createDefaultNode(b1);
@@ -330,8 +330,8 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void synchronizeNewNodeWithTwoPeers200Different() {
-        Blockchain b1 = BlockChainBuilder.ofSize(193, true);
-        Blockchain b2 = BlockChainBuilder.copyAndExtend(b1,7);
+        Blockchain b1 = BlockChainBuilder.ofSizeFromCache(193, true);
+        Blockchain b2 = BlockChainBuilder.copyAndExtendFromCache(b1,7, true);
         Blockchain b3 = BlockChainBuilder.ofSize(0, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createDefaultNode(b1);
@@ -377,8 +377,8 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
     @Test
     public void synchronizeNewNodeWithThreePeers400Different() {
         Blockchain b1 = BlockChainBuilder.ofSize(0, true);
-        Blockchain b2 = BlockChainBuilder.copyAndExtend(b1, 200);
-        Blockchain b3 = BlockChainBuilder.copyAndExtend(b2,200);
+        Blockchain b2 = BlockChainBuilder.copyAndExtendFromCache(b1, 200, true);
+        Blockchain b3 = BlockChainBuilder.copyAndExtendFromCache(b2, 200, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createDefaultNode(b2);
         SimpleAsyncNode node2 = SimpleAsyncNode.createDefaultNode(b2);
@@ -425,8 +425,8 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
     @Test
     public void dontSynchronizeNodeWithShorterChain() throws InterruptedException {
         SimpleAsyncNode node1 = SimpleAsyncNode.createNodeWithWorldBlockChain(50, false, true);
-        SimpleAsyncNode node2 = SimpleAsyncNode.createNodeWithWorldBlockChain(30,false, true);
-        SimpleAsyncNode node3 = SimpleAsyncNode.createNodeWithWorldBlockChain(0,false, true);
+        SimpleAsyncNode node2 = SimpleAsyncNode.createNodeWithWorldBlockChain(30, false, true);
+        SimpleAsyncNode node3 = SimpleAsyncNode.createNodeWithWorldBlockChain(0, false, true);
 
         Assert.assertEquals(50, node1.getBestBlock().getNumber());
         Assert.assertEquals(30, node2.getBestBlock().getNumber());
@@ -472,9 +472,9 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void dontSynchronizeNodeWithShorterChainAndThenSynchronizeWithNewPeer() throws InterruptedException {
-        Blockchain b1 = BlockChainBuilder.ofSize(30, true);
-        Blockchain b2 = BlockChainBuilder.copyAndExtend(b1, 43, true);
-        Blockchain b3 = BlockChainBuilder.copyAndExtend(b2, 7, true);
+        Blockchain b1 = BlockChainBuilder.ofSizeFromCache(30, true);
+        Blockchain b2 = BlockChainBuilder.copyAndExtendFromCache(b1, 43, true);
+        Blockchain b3 = BlockChainBuilder.copyAndExtendFromCache(b2, 7, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createNode(b1, SyncConfiguration.IMMEDIATE_FOR_TESTING);
         SimpleAsyncNode node2 = SimpleAsyncNode.createNode(b2, SyncConfiguration.IMMEDIATE_FOR_TESTING);
@@ -524,8 +524,8 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void ignoreNewBlockHashesWhenSyncing() {
-        Blockchain b1 = BlockChainBuilder.ofSize(30, true);
-        Blockchain b2 = BlockChainBuilder.copyAndExtend(b1, 1, true);
+        Blockchain b1 = BlockChainBuilder.ofSizeFromCache(30, true);
+        Blockchain b2 = BlockChainBuilder.copyAndExtendFromCache(b1, 1, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createNode(b1, SyncConfiguration.IMMEDIATE_FOR_TESTING);
         SimpleAsyncNode node2 = SimpleAsyncNode.createNode(b2, SyncConfiguration.IMMEDIATE_FOR_TESTING);
@@ -568,8 +568,8 @@ public class ThreeAsyncNodeUsingSyncProcessorTest {
 
     @Test
     public void acceptNewBlockHashWhenNotSyncing() {
-        Blockchain b1 = BlockChainBuilder.ofSize(30, true);
-        Blockchain b2 = BlockChainBuilder.copyAndExtend(b1, 1, true);
+        Blockchain b1 = BlockChainBuilder.ofSizeFromCache(30, true);
+        Blockchain b2 = BlockChainBuilder.copyAndExtendFromCache(b1, 1, true);
 
         SimpleAsyncNode node1 = SimpleAsyncNode.createNode(b1, SyncConfiguration.IMMEDIATE_FOR_TESTING);
         SimpleAsyncNode node2 = SimpleAsyncNode.createNode(b2, SyncConfiguration.IMMEDIATE_FOR_TESTING);

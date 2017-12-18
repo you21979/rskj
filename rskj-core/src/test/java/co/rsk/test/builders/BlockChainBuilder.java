@@ -38,13 +38,18 @@ import org.ethereum.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.junit.Assert;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by ajlopez on 8/6/2016.
  */
 public class BlockChainBuilder {
+    private static List<Block> blockCache = new ArrayList<>();
+
     private boolean testing;
     private boolean rsk;
 
@@ -168,14 +173,25 @@ public class BlockChainBuilder {
     }
 
     public static Blockchain ofSize(int size, boolean mining) {
-        return ofSize(size, mining, null, null);
+        return ofSize(size, mining, null, null, false);
+    }
+
+    public static Blockchain ofSizeFromCache(int size, boolean mining) {
+        return ofSize(size, mining, null, null, true);
     }
 
     public static Blockchain ofSize(int size, boolean mining, List<Account> accounts, List<BigInteger> balances) {
+        return ofSize(size, mining, accounts, balances, false);
+    }
+
+    public static Blockchain ofSize(int size, boolean mining, List<Account> accounts, List<BigInteger> balances, boolean fromCache) {
         BlockChainBuilder builder = new BlockChainBuilder();
         BlockChainImpl blockChain = builder.build();
+        BlockGenerator blockGenerator = new BlockGenerator();
 
-        Block genesis = BlockGenerator.getInstance().getGenesisBlock();
+        Block genesis = blockGenerator.getGenesisBlock();
+        genesis.setStateRoot(blockChain.getRepository().getRoot());
+        genesis.flushRLP();
 
         if (accounts != null)
             for (int k = 0; k < accounts.size(); k++) {
@@ -191,13 +207,44 @@ public class BlockChainBuilder {
         Assert.assertEquals(ImportResult.IMPORTED_BEST, blockChain.tryToConnect(genesis));
 
         if (size > 0) {
-            List<Block> blocks = mining ? BlockGenerator.getInstance().getMinedBlockChain(genesis, size) : BlockGenerator.getInstance().getBlockChain(genesis, size);
+            List<Block> blocks = getBlocks(blockGenerator, genesis, size, mining, fromCache);
 
             for (Block block: blocks)
                 Assert.assertEquals(ImportResult.IMPORTED_BEST, blockChain.tryToConnect(block));
         }
 
         return blockChain;
+    }
+
+    private static List<Block> getBlocks(BlockGenerator blockGenerator, Block fromBlock, int size, boolean mining, boolean fromCache) {
+        if (fromCache && mining) {
+            if (tryUseCache(blockGenerator, fromBlock, size)) {
+                return blockCache.stream().skip(fromBlock.getNumber() + 1).limit(size).collect(Collectors.toList());
+            }
+        }
+
+        return mining ? blockGenerator.getMinedBlockChain(fromBlock, size) : blockGenerator.getBlockChain(fromBlock, size);
+    }
+
+    private synchronized static boolean tryUseCache(BlockGenerator blockGenerator, Block fromBlock, int size) {
+        long fromNumber = fromBlock.getNumber();
+
+        if (blockCache.isEmpty() && fromNumber == 0)
+            blockCache.add(fromBlock);
+
+        if (fromNumber >= blockCache.size())
+            return false;
+
+        if (!Arrays.equals(fromBlock.getHash(), blockCache.get((int)fromNumber).getHash()))
+            return false;
+
+        if (fromNumber + size >= blockCache.size())
+            blockCache.addAll(blockGenerator.getMinedBlockChain(blockCache.get(blockCache.size() - 1), (int)fromNumber + size - blockCache.size() + 1));
+
+        if (fromNumber < blockCache.size() && fromNumber + size < blockCache.size())
+            return true;
+
+        return false;
     }
 
     public static Blockchain copy(Blockchain original) {
@@ -218,13 +265,27 @@ public class BlockChainBuilder {
 
     public static Blockchain copyAndExtend(Blockchain original, int size, boolean mining) {
         Blockchain blockchain = copy(original);
-        extend(blockchain, size, false, mining);
+        extend(blockchain, size, false, mining, false);
+
+        return blockchain;
+    }
+
+    public static Blockchain copyAndExtendFromCache(Blockchain original, int size, boolean mining) {
+        Blockchain blockchain = copy(original);
+        extend(blockchain, size, false, mining, true);
+
         return blockchain;
     }
 
     public static void extend(Blockchain blockchain, int size, boolean withUncles, boolean mining) {
+        extend(blockchain, size, withUncles, mining, false);
+    }
+
+    public static void extend(Blockchain blockchain, int size, boolean withUncles, boolean mining, boolean fromCache) {
         Block initial = blockchain.getBestBlock();
-        List<Block> blocks = BlockGenerator.getInstance().getBlockChain(initial, size, 0, withUncles, mining, null);
+        BlockGenerator blockGenerator = new BlockGenerator();
+
+        List<Block> blocks = withUncles ? blockGenerator.getBlockChain(initial, size, 0, withUncles, mining, null) : getBlocks(blockGenerator, initial, size, mining, fromCache);
 
         for (Block block: blocks)
             blockchain.tryToConnect(block);

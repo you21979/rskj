@@ -352,7 +352,7 @@ public class SyncProcessorTest {
     @Test
     public void processBlockHeadersResponseWithManyHeadersMissingFirstParent() {
         Blockchain blockchain = BlockChainBuilder.ofSize(0);
-        Blockchain otherBlockchain = BlockChainBuilder.ofSize(10, true);
+        Blockchain otherBlockchain = BlockChainBuilder.ofSizeFromCache(10, true);
         SimpleMessageChannel sender = new SimpleMessageChannel(new byte[] { 0x01 });
 
         SyncConfiguration syncConfiguration = SyncConfiguration.IMMEDIATE_FOR_TESTING;
