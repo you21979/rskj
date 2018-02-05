@@ -49,8 +49,8 @@ public class ClIInterfaceTest {
         Assert.assertEquals(result.get(SystemProperties.PROPERTY_DB_DIR), "java");
         Assert.assertEquals(result.get(SystemProperties.PROPERTY_PEER_PORT), "3332");
         Assert.assertEquals(result.get(SystemProperties.PROPERTY_DB_RESET), "true");
-        Assert.assertEquals(result.get(SystemProperties.PROPERTY_RPC_PORT), "4444");
-        Assert.assertEquals(result.get(SystemProperties.PROPERTY_RPC_ENABLED), "true");
+        Assert.assertEquals(result.get(SystemProperties.PROPERTY_RPC_HTTP_PORT), "4444");
+        Assert.assertEquals(result.get(SystemProperties.PROPERTY_RPC_HTTP_ENABLED), "true");
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ClIInterfaceTest {
         String[] inputParams = { "-rpc", "-4444" };
         Map<String, String> result = CLIInterface.call(config, inputParams);
 
-        Assert.assertEquals(result.get(SystemProperties.PROPERTY_RPC_ENABLED), "true");
+        Assert.assertEquals(result.get(SystemProperties.PROPERTY_RPC_HTTP_ENABLED), "true");
     }
 
     @Test

@@ -92,11 +92,11 @@ public class CLIInterface {
                 if ("-rpc".equals(args[i])) {
                     if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
                         String portStr =  args[i + 1];
-                        cliOptions.put(SystemProperties.PROPERTY_RPC_PORT, portStr);
+                        cliOptions.put(SystemProperties.PROPERTY_RPC_HTTP_PORT, portStr);
                         logger.info("RPC port set to [{}]", portStr);
                     }
 
-                    cliOptions.put(SystemProperties.PROPERTY_RPC_ENABLED, "true");
+                    cliOptions.put(SystemProperties.PROPERTY_RPC_HTTP_ENABLED, "true");
                 }
 
                 // override the rpc cors parameter
@@ -112,7 +112,7 @@ public class CLIInterface {
                         logger.info("RPC CORS header set to [{}]", headerStr);
                     }
 
-                    cliOptions.put(SystemProperties.PROPERTY_RPC_ENABLED, "true");
+                    cliOptions.put(SystemProperties.PROPERTY_RPC_HTTP_ENABLED, "true");
                 }
             }
 
