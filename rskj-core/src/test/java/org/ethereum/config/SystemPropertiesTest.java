@@ -32,7 +32,7 @@ public class SystemPropertiesTest {
     @Test
     public void punchBindIpTest() {
         RskSystemProperties config = new RskSystemProperties();
-        config.overrideParams("bind.address", "");
+        config.overrideParams("bind_address", "");
         long st = System.currentTimeMillis();
         InetAddress ip = config.getBindAddress();
         long t = System.currentTimeMillis() - st;
