@@ -67,6 +67,7 @@ import java.util.stream.Collectors;
 public abstract class SystemProperties {
     private static final String DEFAULT_BIND_ADDRESS = "::";
     private static final int DEFAULT_RPC_HTTP_PORT = 4444;
+    private static final int DEFAULT_RPC_WEBSOCKET_PORT = 4445;
     private static Logger logger = LoggerFactory.getLogger("general");
 
     public static final String PROPERTY_DB_DIR = "database.dir";
@@ -79,6 +80,10 @@ public abstract class SystemProperties {
     public static final String PROPERTY_RPC_HTTP_ADDRESS = "rpc.providers.web.http.bind_address";
     public static final String PROPERTY_RPC_HTTP_HOST = "rpc.providers.web.http.host";
     public static final String PROPERTY_RPC_HTTP_PORT = "rpc.providers.web.http.port";
+    private static final String PROPERTY_RPC_WEBSOCKET_ENABLED = "rpc.providers.web.ws.enabled";
+    private static final String PROPERTY_RPC_WEBSOCKET_ADDRESS = "rpc.providers.web.ws.bind_address";
+    private static final String PROPERTY_RPC_WEBSOCKET_PORT = "rpc.providers.web.ws.port";
+
     public static final String PROPERTY_PUBLIC_IP = "public.ip";
     public static final String PROPERTY_BIND_ADDRESS = "bind_address";
 
@@ -743,13 +748,32 @@ public abstract class SystemProperties {
     }
 
     public boolean isRpcHttpEnabled() {
-        return configFromFiles.hasPath(PROPERTY_RPC_HTTP_ENABLED) ?
-                configFromFiles.getBoolean(PROPERTY_RPC_HTTP_ENABLED) : false;
+        return getOrFalse(PROPERTY_RPC_HTTP_ENABLED);
+    }
+
+    public boolean isRpcWebSocketEnabled() {
+        return getOrFalse(PROPERTY_RPC_WEBSOCKET_ENABLED);
     }
 
     public int rpcHttpPort() {
-        return configFromFiles.hasPath(PROPERTY_RPC_HTTP_PORT) ?
-                configFromFiles.getInt(PROPERTY_RPC_HTTP_PORT) : DEFAULT_RPC_HTTP_PORT;
+        return getIntOrDefault(PROPERTY_RPC_HTTP_PORT, DEFAULT_RPC_HTTP_PORT);
+    }
+
+    public int rpcWebSocketPort() {
+        return getIntOrDefault(PROPERTY_RPC_WEBSOCKET_PORT, DEFAULT_RPC_WEBSOCKET_PORT);
+    }
+
+    public int getIntOrDefault(String configKey, int defaultValue) {
+        return configFromFiles.hasPath(configKey) ?
+                configFromFiles.getInt(configKey) : defaultValue;
+    }
+
+    private boolean getOrFalse(String configKey) {
+        return configFromFiles.hasPath(configKey) && configFromFiles.getBoolean(configKey);
+    }
+
+    public InetAddress rpcWebSocketBindAddress() {
+        return getWebBindAddress(PROPERTY_RPC_WEBSOCKET_ADDRESS);
     }
 
     public List<String> rpcHttpHost() {
@@ -758,12 +782,16 @@ public abstract class SystemProperties {
     }
 
     public InetAddress rpcHttpBindAddress() {
-        if (!configFromFiles.hasPath(PROPERTY_RPC_HTTP_ADDRESS)) {
+        return getWebBindAddress(PROPERTY_RPC_HTTP_ADDRESS);
+    }
+
+    private InetAddress getWebBindAddress(String bindAddressConfigKey) {
+        if (!configFromFiles.hasPath(bindAddressConfigKey)) {
             return InetAddress.getLoopbackAddress();
         }
-        String host = configFromFiles.getString(PROPERTY_RPC_HTTP_ADDRESS);
+        String bindAddress = configFromFiles.getString(bindAddressConfigKey);
         try {
-            return InetAddress.getByName(host);
+            return InetAddress.getByName(bindAddress);
         } catch (UnknownHostException e) {
             logger.warn("Unable to bind to {}. Using loopback instead", e);
             return InetAddress.getLoopbackAddress();

@@ -33,6 +33,7 @@ import co.rsk.net.MessageHandler;
 import co.rsk.net.Metrics;
 import co.rsk.net.discovery.UDPServer;
 import co.rsk.net.handler.TxHandler;
+import co.rsk.rpc.netty.Web3WebSocketServer;
 import org.ethereum.cli.CLIInterface;
 import org.ethereum.config.DefaultConfig;
 import org.ethereum.core.*;
@@ -62,6 +63,7 @@ public class Start {
     private final MinerClient minerClient;
     private final RskSystemProperties rskSystemProperties;
     private final Web3HttpServer web3HttpServer;
+    private final Web3WebSocketServer web3WebSocketServer;
     private final Repository repository;
     private final Blockchain blockchain;
     private final ChannelManager channelManager;
@@ -78,7 +80,13 @@ public class Start {
         ApplicationContext ctx = new AnnotationConfigApplicationContext(DefaultConfig.class);
         Start runner = ctx.getBean(Start.class);
         runner.startNode(args);
-        Runtime.getRuntime().addShutdownHook(new Thread(runner::stop));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                runner.stop();
+            } catch (InterruptedException e) {
+                logger.error("RSK node didn't shutdown gracefully", e);
+            }
+        }));
     }
 
     @Autowired
@@ -89,6 +97,7 @@ public class Start {
                  RskSystemProperties rskSystemProperties,
                  Web3 web3Service,
                  Web3HttpServer web3HttpServer,
+                 Web3WebSocketServer web3WebSocketServer,
                  Repository repository,
                  Blockchain blockchain,
                  ChannelManager channelManager,
@@ -105,6 +114,7 @@ public class Start {
         this.rskSystemProperties = rskSystemProperties;
         this.web3HttpServer = web3HttpServer;
         this.web3Service = web3Service;
+        this.web3WebSocketServer = web3WebSocketServer;
         this.repository = repository;
         this.blockchain = blockchain;
         this.channelManager = channelManager;
@@ -154,13 +164,7 @@ public class Start {
             enableSimulateTxsEx();
         }
 
-        if (rskSystemProperties.isRpcHttpEnabled()) {
-            logger.info("RPC HTTP enabled");
-            startRpcHttpServer();
-        }
-        else {
-            logger.info("RPC disabled");
-        }
+        startWeb3(rskSystemProperties);
 
         if (rskSystemProperties.isPeerDiscoveryEnabled()) {
             udpServer.start();
@@ -184,9 +188,28 @@ public class Start {
 
     }
 
-    private void startRpcHttpServer() throws InterruptedException {
-        web3Service.start();
-        web3HttpServer.start();
+    private void startWeb3(RskSystemProperties rskSystemProperties) throws InterruptedException {
+        boolean rpcHttpEnabled = rskSystemProperties.isRpcHttpEnabled();
+        boolean rpcWebSocketEnabled = rskSystemProperties.isRpcWebSocketEnabled();
+
+        if (rpcHttpEnabled || rpcWebSocketEnabled) {
+            web3Service.start();
+        }
+
+        if (rpcHttpEnabled) {
+            logger.info("RPC HTTP enabled");
+            web3HttpServer.start();
+        } else {
+            logger.info("RPC HTTP disabled");
+        }
+
+        if (rpcWebSocketEnabled) {
+            logger.info("RPC WebSocket enabled");
+            web3WebSocketServer.start();
+        } else {
+            logger.info("RPC WebSocket disabled");
+        }
+
     }
 
     private void enableSimulateTxs() {
@@ -208,12 +231,23 @@ public class Start {
         }
     }
 
-    public void stop() {
+    public void stop() throws InterruptedException {
         logger.info("Shutting down RSK node");
+        boolean rpcHttpEnabled = rskSystemProperties.isRpcHttpEnabled();
+        boolean rpcWebSocketEnabled = rskSystemProperties.isRpcWebSocketEnabled();
         syncPool.stop();
-        if (rskSystemProperties.isRpcHttpEnabled()) {
+
+        if (rpcHttpEnabled) {
+            web3HttpServer.stop();
+        }
+        if (rpcWebSocketEnabled) {
+            web3WebSocketServer.stop();
+        }
+
+        if (rpcHttpEnabled || rpcWebSocketEnabled) {
             web3Service.stop();
         }
+
         rsk.close();
         messageHandler.stop();
         txHandler.stop();

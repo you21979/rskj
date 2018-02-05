@@ -39,6 +39,7 @@ import co.rsk.rpc.modules.txpool.TxPoolModule;
 import co.rsk.rpc.netty.JsonRpcWeb3FilterHandler;
 import co.rsk.rpc.netty.JsonRpcWeb3ServerHandler;
 import co.rsk.rpc.netty.Web3HttpServer;
+import co.rsk.rpc.netty.Web3WebSocketServer;
 import co.rsk.scoring.PeerScoringManager;
 import co.rsk.scoring.PunishmentParameters;
 import co.rsk.validators.ProofOfWorkRule;
@@ -64,7 +65,7 @@ import org.ethereum.net.p2p.P2pHandler;
 import org.ethereum.net.rlpx.HandshakeHandler;
 import org.ethereum.net.rlpx.MessageCodec;
 import org.ethereum.net.server.*;
-import org.ethereum.rpc.Web3;
+import org.ethereum.rpc.*;
 import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.sync.SyncPool;
 import org.ethereum.vm.program.invoke.ProgramInvokeFactory;
@@ -188,6 +189,16 @@ public class RskFactory {
     @Bean
     public JsonRpcWeb3ServerHandler getJsonRpcWeb3ServerHandler(Web3 web3Service, RskSystemProperties rskSystemProperties) {
         return new JsonRpcWeb3ServerHandler(web3Service, rskSystemProperties.getRpcModules());
+    }
+
+    @Bean
+    public Web3WebSocketServer getWeb3WebSocketServer(RskSystemProperties rskSystemProperties,
+                                                      JsonRpcWeb3ServerHandler serverHandler) {
+        return new Web3WebSocketServer(
+            rskSystemProperties.rpcWebSocketBindAddress(),
+            rskSystemProperties.rpcWebSocketPort(),
+            serverHandler
+        );
     }
 
     @Bean
