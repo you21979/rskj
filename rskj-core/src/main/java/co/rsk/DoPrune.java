@@ -74,29 +74,31 @@ public class DoPrune {
     }
 
     public void doPrune(String[] args) throws Exception {
-        logger.info("Pruning Database");
+        synchronized (this.blockchain) {
+            logger.info("Pruning Database");
 
-        int blocksToProcess = DEFAULT_BLOCKS_TO_PROCESS;
-        // blocksToProcess = 100;
-        String contractAddress = DEFAULT_CONTRACT_ADDRESS;
+            int blocksToProcess = DEFAULT_BLOCKS_TO_PROCESS;
+            // blocksToProcess = 100;
+            String contractAddress = DEFAULT_CONTRACT_ADDRESS;
 
-        CLIInterface.call(rskSystemProperties, args);
-        logger.info("Running {},  core version: {}-{}", rskSystemProperties.genesisInfo(), rskSystemProperties.projectVersion(), rskSystemProperties.projectVersionModifier());
-        BuildInfo.printInfo();
+            CLIInterface.call(rskSystemProperties, args);
+            logger.info("Running {},  core version: {}-{}", rskSystemProperties.genesisInfo(), rskSystemProperties.projectVersion(), rskSystemProperties.projectVersionModifier());
+            BuildInfo.printInfo();
 
-        long height = this.blockchain.getBestBlock().getNumber();
+            long height = this.blockchain.getBestBlock().getNumber();
 
-        String dataSourceName = getDataSourceName(contractAddress);
-        logger.info("Datasource Name {}", dataSourceName);
-        logger.info("Blockchain height {}", height);
+            String dataSourceName = getDataSourceName(contractAddress);
+            logger.info("Datasource Name {}", dataSourceName);
+            logger.info("Blockchain height {}", height);
 
-        TrieImpl source = new TrieImpl(new TrieStoreImpl(levelDbByName(dataSourceName)), true);
-        KeyValueDataSource targetDataSource = levelDbByName(dataSourceName + "B");
-        TrieStore targetStore = new TrieStoreImpl(targetDataSource);
+            TrieImpl source = new TrieImpl(new TrieStoreImpl(levelDbByName(dataSourceName)), true);
+            KeyValueDataSource targetDataSource = levelDbByName(dataSourceName + "B");
+            TrieStore targetStore = new TrieStoreImpl(targetDataSource);
 
-        this.processBlocks(height - blocksToProcess, source, contractAddress, targetStore);
+            this.processBlocks(height - blocksToProcess, source, contractAddress, targetStore);
 
-        targetDataSource.close();
+            targetDataSource.close();
+        }
     }
 
     public void processBlocks(long from, TrieImpl sourceTrie, String contractAddress, TrieStore targetStore) {
