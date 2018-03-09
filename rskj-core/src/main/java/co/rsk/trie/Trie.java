@@ -44,6 +44,8 @@ public interface Trie {
 
     void save();
 
+    void copyTo(TrieStore target);
+
     int trieSize();
 
     Trie cloneTrie();
