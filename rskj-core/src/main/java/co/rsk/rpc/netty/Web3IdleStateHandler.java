@@ -32,7 +32,7 @@ public class Web3IdleStateHandler extends ChannelDuplexHandler {
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent e = (IdleStateEvent) evt;
             if (e.state() == IdleState.READER_IDLE) {
-                ctx.close();
+//                ctx.close();
             }
         }
     }

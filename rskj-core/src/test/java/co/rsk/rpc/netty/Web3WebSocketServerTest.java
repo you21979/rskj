@@ -74,7 +74,12 @@ public class Web3WebSocketServerTest {
         List<ModuleDescription> filteredModules = Collections.singletonList(new ModuleDescription("web3", "1.0", true, Collections.emptyList(), Collections.emptyList()));
         JsonRpcWeb3ServerHandler serverHandler = new JsonRpcWeb3ServerHandler(web3Mock, filteredModules);
 
-        Web3WebSocketServer websocketServer = new Web3WebSocketServer(InetAddress.getLoopbackAddress(), randomPort, serverHandler);
+        Web3WebSocketServer websocketServer = new Web3WebSocketServer(
+                InetAddress.getLoopbackAddress(),
+                randomPort,
+                serverHandler,
+                null
+        );
         websocketServer.start();
 
         OkHttpClient wsClient = new OkHttpClient();

@@ -30,6 +30,7 @@ import co.rsk.net.handler.TxHandler;
 import co.rsk.net.handler.TxHandlerImpl;
 import co.rsk.net.sync.SyncConfiguration;
 import co.rsk.rpc.CorsConfiguration;
+import co.rsk.rpc.EthSubscribeEventEmitter;
 import co.rsk.rpc.Web3RskImpl;
 import co.rsk.rpc.modules.eth.*;
 import co.rsk.rpc.modules.personal.PersonalModule;
@@ -51,6 +52,7 @@ import org.ethereum.core.genesis.BlockChainLoader;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.datasource.LevelDbDataSource;
 import org.ethereum.db.ReceiptStore;
+import org.ethereum.facade.Ethereum;
 import org.ethereum.listener.CompositeEthereumListener;
 import org.ethereum.listener.EthereumListener;
 import org.ethereum.net.EthereumChannelInitializerFactory;
@@ -65,7 +67,7 @@ import org.ethereum.net.p2p.P2pHandler;
 import org.ethereum.net.rlpx.HandshakeHandler;
 import org.ethereum.net.rlpx.MessageCodec;
 import org.ethereum.net.server.*;
-import org.ethereum.rpc.*;
+import org.ethereum.rpc.Web3;
 import org.ethereum.solidity.compiler.SolidityCompiler;
 import org.ethereum.sync.SyncPool;
 import org.ethereum.vm.program.invoke.ProgramInvokeFactory;
@@ -192,13 +194,21 @@ public class RskFactory {
     }
 
     @Bean
-    public Web3WebSocketServer getWeb3WebSocketServer(RskSystemProperties rskSystemProperties,
-                                                      JsonRpcWeb3ServerHandler serverHandler) {
+    public Web3WebSocketServer getWeb3WebSocketServer(
+            RskSystemProperties rskSystemProperties,
+            JsonRpcWeb3ServerHandler serverHandler,
+            EthSubscribeEventEmitter emitter) {
         return new Web3WebSocketServer(
-            rskSystemProperties.rpcWebSocketBindAddress(),
-            rskSystemProperties.rpcWebSocketPort(),
-            serverHandler
+                rskSystemProperties.rpcWebSocketBindAddress(),
+                rskSystemProperties.rpcWebSocketPort(),
+                serverHandler,
+                emitter
         );
+    }
+
+    @Bean
+    public EthSubscribeEventEmitter getEthSubscribeEventEmitter(Ethereum ethereum) {
+        return new EthSubscribeEventEmitter(ethereum);
     }
 
     @Bean
