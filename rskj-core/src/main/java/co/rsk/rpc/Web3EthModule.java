@@ -55,6 +55,10 @@ public interface Web3EthModule {
         return getEthModule().bridgeState();
     }
 
+    default String eth_subscribe(String type) throws Exception {
+        return getEthModule().subscribe();
+    }
+
     EthModule getEthModule();
 
     String eth_protocolVersion();

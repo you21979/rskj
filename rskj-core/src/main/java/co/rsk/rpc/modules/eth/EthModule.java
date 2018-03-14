@@ -144,4 +144,8 @@ public class EthModule
                 hexArgs.getFromAddress()
         );
     }
+
+    public String subscribe() {
+        return "0xcd0c3e8af590364c09d0fa6a1210faf5";
+    }
 }
