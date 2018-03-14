@@ -50,7 +50,8 @@ public class JsonRpcWeb3FilterHandler extends SimpleChannelInboundHandler<FullHt
                         logger.warn("Wildcard address is not allowed on rpc host property {}", hostAddress);
                     }
                 } catch (UnknownHostException e) {
-                    logger.info("Invalid Host defined on rpc.host", e);
+                    hosts.add(host);
+                    logger.debug("Invalid Host defined on rpc.host", e);
                 }
             }
         }
