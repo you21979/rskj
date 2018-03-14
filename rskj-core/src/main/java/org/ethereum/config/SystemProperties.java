@@ -45,11 +45,12 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
-import static org.ethereum.crypto.Keccak256Helper.keccak256;
 
 /**
  * Utility class to retrieve property values from the rskj.conf files
@@ -111,17 +112,21 @@ public abstract class SystemProperties {
     private String genesisInfo = null;
 
     private String publicIp = null;
-
+;
     private Boolean syncEnabled = null;
     private Boolean discoveryEnabled = null;
 
     private BlockchainNetConfig blockchainConfig;
+
+    private final String networkName;
     
     protected SystemProperties() {
         try {
+            // TODO get this from argv
+            this.networkName = "regtest";
             // could be locked but the result should be the same if there is no race condition
             if (configFromFiles == null){
-                configFromFiles = getConfigFromFiles();
+                configFromFiles = getConfigFromFiles(this.networkName);
                 logger.debug("Config trace: " + configFromFiles.root().render(ConfigRenderOptions.defaults().
                         setComments(false).setJson(false)));
                 validateConfig();
@@ -153,23 +158,13 @@ public abstract class SystemProperties {
         return props.getProperty("modifier").replaceAll("\"", "");
     }
 
-    private static Config getConfigFromFiles() {
-        Config javaSystemProperties = ConfigFactory.load("no-such-resource-only-system-props");
-        Config referenceConfig = ConfigFactory.parseResources("rskj.conf");
-        logger.info("Config ( {} ): default properties from resource 'rskj.conf'", referenceConfig.entrySet().isEmpty() ? NO : YES);
-        File installerFile = new File("/etc/rsk/node.conf");
-        Config installerConfig = installerFile.exists() ? ConfigFactory.parseFile(installerFile) : ConfigFactory.empty();
-        logger.info("Config ( {} ): default properties from installer '/etc/rsk/node.conf'", installerConfig.entrySet().isEmpty() ? NO : YES);
-        Config testConfig = ConfigFactory.parseResources("test-rskj.conf");
-        logger.info("Config ( {} ): test properties from resource 'test-rskj.conf'", testConfig.entrySet().isEmpty() ? NO : YES);
-        String file = System.getProperty("rsk.conf.file");
-        Config cmdLineConfigFile = file != null ? ConfigFactory.parseFile(new File(file)) : ConfigFactory.empty();
-        logger.info("Config ( {} ): user properties from -Drsk.conf.file file '{}'", cmdLineConfigFile.entrySet().isEmpty() ? NO : YES, file);
-        return javaSystemProperties
-                .withFallback(cmdLineConfigFile)
-                .withFallback(testConfig)
-                .withFallback(referenceConfig)
-                .withFallback(installerConfig);
+    private static Config getConfigFromFiles(String networkName) {
+        Path configPath = Optional.ofNullable(System.getProperty("rsk.conf.file"))
+                .map(Paths::get)
+                .orElseGet(() -> Paths.get(System.getProperty("user.home"), ".rskj", networkName, "node.conf"));
+        Config networkBaseConfig = ConfigFactory.load(networkName);
+        Config nodeConfig = ConfigFactory.parseFile(configPath.toFile());
+        return nodeConfig.withFallback(networkBaseConfig);
     }
 
     public Config getConfig() {
@@ -269,7 +264,7 @@ public abstract class SystemProperties {
                         blockchainConfig = new RegTestConfig();
                         break;
                     default:
-                        throw new RuntimeException("Unknown value for 'blockchain.config.name': '" + configFromFiles.getString("blockchain.config.name") + "'");
+                        throw new RuntimeException("Unknown value for 'blockchain.config.name': '" + netName + "'");
                 }
             } else {
                 String className = configFromFiles.getString("blockchain.config.class");
@@ -741,7 +736,7 @@ public abstract class SystemProperties {
     }
 
     public String netName() {
-        return configFromFiles.hasPath("blockchain.config.name") ? configFromFiles.getString("blockchain.config.name") : null;
+        return this.networkName;
     }
 
     public boolean isRpcEnabled() {
