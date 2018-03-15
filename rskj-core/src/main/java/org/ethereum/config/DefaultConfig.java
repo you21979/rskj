@@ -40,7 +40,10 @@ import org.ethereum.core.Repository;
 import org.ethereum.crypto.ECKey;
 import org.ethereum.datasource.KeyValueDataSource;
 import org.ethereum.datasource.LevelDbDataSource;
-import org.ethereum.db.*;
+import org.ethereum.db.BlockStore;
+import org.ethereum.db.IndexedBlockStore;
+import org.ethereum.db.ReceiptStore;
+import org.ethereum.db.ReceiptStoreImpl;
 import org.ethereum.net.rlpx.Node;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -50,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.env.Environment;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -133,7 +137,15 @@ public class DefaultConfig {
     }
 
     @Bean
-    public RskSystemProperties rskSystemProperties() {
+    public RskSystemProperties rskSystemProperties(Environment env) {
+        if (env.containsProperty("regtest")) {
+            return new RskSystemProperties("regtest");
+        }
+
+        if (env.containsProperty("testnet")) {
+            return new RskSystemProperties("testnet");
+        }
+
         return new RskSystemProperties();
     }
 

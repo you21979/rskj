@@ -33,20 +33,21 @@ import co.rsk.net.MessageHandler;
 import co.rsk.net.Metrics;
 import co.rsk.net.discovery.UDPServer;
 import co.rsk.net.handler.TxHandler;
+import co.rsk.rpc.netty.Web3HttpServer;
 import org.ethereum.cli.CLIInterface;
 import org.ethereum.config.DefaultConfig;
 import org.ethereum.core.*;
 import org.ethereum.net.eth.EthVersion;
 import org.ethereum.net.server.ChannelManager;
-import co.rsk.rpc.netty.Web3HttpServer;
 import org.ethereum.rpc.Web3;
 import org.ethereum.sync.SyncPool;
 import org.ethereum.util.BuildInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.core.env.CommandLinePropertySource;
+import org.springframework.core.env.SimpleCommandLinePropertySource;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Nullable;
@@ -75,7 +76,11 @@ public class Start {
     private final SyncPool.PeerClientFactory peerClientFactory;
 
     public static void main(String[] args) throws Exception {
-        ApplicationContext ctx = new AnnotationConfigApplicationContext(DefaultConfig.class);
+        CommandLinePropertySource clps = new SimpleCommandLinePropertySource(args);
+        AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+        ctx.getEnvironment().getPropertySources().addFirst(clps);
+        ctx.register(DefaultConfig.class);
+        ctx.refresh();
         Start runner = ctx.getBean(Start.class);
         runner.startNode(args);
         Runtime.getRuntime().addShutdownHook(new Thread(runner::stop));

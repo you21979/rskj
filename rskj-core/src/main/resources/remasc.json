@@ -21,7 +21,7 @@
       "paidFeesMultiplier": 2,
       "paidFeesDivisor": 1
    },
-   "main": {
+   "mainnet": {
       "maturity" : 4000,
       "syntheticSpan" : 10,
       "rskLabsDivisor" : 5,

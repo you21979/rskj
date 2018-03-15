@@ -45,8 +45,7 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -120,10 +119,10 @@ public abstract class SystemProperties {
 
     private final String networkName;
     
-    protected SystemProperties() {
+    protected SystemProperties(String networkName) {
         try {
             // TODO get this from argv
-            this.networkName = "regtest";
+            this.networkName = networkName;
             // could be locked but the result should be the same if there is no race condition
             if (configFromFiles == null){
                 configFromFiles = getConfigFromFiles(this.networkName);
@@ -159,11 +158,35 @@ public abstract class SystemProperties {
     }
 
     private static Config getConfigFromFiles(String networkName) {
-        Path configPath = Optional.ofNullable(System.getProperty("rsk.conf.file"))
-                .map(Paths::get)
+        Optional<Path> customConfigPath = Optional.ofNullable(System.getProperty("rsk.conf.file"))
+                .map(Paths::get);
+        if (customConfigPath.isPresent()) {
+            if (!Files.isReadable(customConfigPath.get())) {
+                logger.error("Can't read specified config file: {}", customConfigPath.get());
+                customConfigPath = Optional.empty();
+            }
+        }
+
+        Path configPath = customConfigPath
                 .orElseGet(() -> Paths.get(System.getProperty("user.home"), ".rskj", networkName, "node.conf"));
-        Config networkBaseConfig = ConfigFactory.load(networkName);
-        Config nodeConfig = ConfigFactory.parseFile(configPath.toFile());
+        // use .resolve() so we can capture environment variables
+        Config networkBaseConfig = ConfigFactory.load(networkName).resolve();
+        Config nodeConfig = ConfigFactory.parseFile(configPath.toFile()).resolve();
+        if (!nodeConfig.hasPath("peer.nodeId")) {
+            ECKey key = new ECKey();
+            nodeConfig = nodeConfig
+                    .withValue("peer.privateKey", ConfigValueFactory.fromAnyRef(Hex.toHexString(key.getPrivKeyBytes())))
+                    .withValue("peer.nodeId", ConfigValueFactory.fromAnyRef(Hex.toHexString(key.getNodeId())));
+            String updatedSettings = nodeConfig.root()
+                    .render(ConfigRenderOptions.defaults().setOriginComments(false).setJson(false));
+            try {
+                Files.createDirectories(configPath.getParent());
+                Files.write(configPath, updatedSettings.getBytes(), StandardOpenOption.CREATE);
+            } catch (IOException e) {
+                logger.error("Can't write nodeId to config file, will not persist across restarts", e);
+            }
+        }
+
         return nodeConfig.withFallback(networkBaseConfig);
     }
 
@@ -248,7 +271,7 @@ public abstract class SystemProperties {
             }
             if (netName != null) {
                 switch(netName) {
-                    case "main":
+                    case "mainnet":
                         blockchainConfig = new MainNetConfig();
                         break;
                     case "fallbackmain":
